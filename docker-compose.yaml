@@ -1,0 +1,77 @@
+---
+
+services:
+  ansible:
+    hostname: ansible
+    platform: linux/amd64
+    #image: ftutorials/ubuntu-ansible:1.0
+    build: .
+    container_name: ansible
+    ports:
+      - "2222:22"
+      - "80:80"
+    volumes:
+      - ./config:/root/config
+      - ./config/.ssh/:/root/.ssh/
+    networks:
+      - ansible_net
+
+  client1:
+    hostname: client1
+    platform: linux/amd64
+    image: ftutorials/ubuntu-ssh:1.0
+    container_name: client1
+    ports:
+      - "2223:22"
+      - "3003:3000" 
+      - "8083:80" 
+    volumes:
+      - ./config/.ssh/id_ed25519.pub:/root/.ssh/authorized_keys
+    networks:
+      - ansible_net
+
+  client2:
+    hostname: client2
+    platform: linux/amd64
+    image: ftutorials/ubuntu-ssh:1.0
+    container_name: client2
+    ports:
+      - "2224:22"
+      - "3004:3000"
+      - "8084:80" 
+    volumes:
+      - ./config/.ssh/id_ed25519.pub:/root/.ssh/authorized_keys
+    networks:
+      - ansible_net
+
+  client3:
+    hostname: client3
+    platform: linux/amd64
+    image: ftutorials/rocky-ssh:1.0
+    container_name: client3
+    ports:
+      - "2225:22"
+      - "3005:3000"
+      - "8085:80" 
+    volumes:
+      - ./config/.ssh/id_ed25519.pub:/root/.ssh/authorized_keys
+    networks:
+      - ansible_net
+
+  client4:
+    hostname: client4
+    platform: linux/amd64
+    image: ftutorials/rocky-ssh:1.0
+    container_name: client4
+    ports:
+      - "2226:22"
+      - "3006:3000"
+      - "8086:80"
+    volumes:
+      - ./config/.ssh/id_ed25519.pub:/root/.ssh/authorized_keys 
+    networks:
+      - ansible_net
+
+networks:
+  ansible_net:
+    driver: bridge

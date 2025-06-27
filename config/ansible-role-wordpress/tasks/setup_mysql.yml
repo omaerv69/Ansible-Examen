@@ -1,0 +1,122 @@
+---
+- name: Supprimer index.html par défaut
+  file:
+    path: "{{ wp_site_dir }}/index.html"
+    state: absent
+  become: true
+
+- name: Initialiser MariaDB data directory (Rocky/RHEL)
+  shell: |
+    if [ ! -d /var/lib/mysql/mysql ]; then
+      mysql_install_db --user=mysql --datadir=/var/lib/mysql
+    fi
+  become: true
+  when: ansible_os_family == "RedHat"
+
+- name: Fixer MariaDB permissions (Rocky/RHEL)
+  file:
+    path: /var/lib/mysql
+    owner: mysql
+    group: mysql
+    recurse: true
+  become: true
+  when: ansible_os_family == "RedHat"
+
+- name: Create MariaDB run directory (Rocky/RHEL)
+  file:
+    path: /var/run/mysqld
+    state: directory
+    owner: mysql
+    group: mysql
+    mode: '0755'
+  become: true
+  when: ansible_os_family == "RedHat"
+
+# Installation de PyMySQL pour permettre aux modules MySQL d'Ansible de fonctionner
+- name: Installer PyMySQL sur Rocky
+  dnf:
+    name: python3-PyMySQL
+    state: present
+  when: ansible_facts['distribution'] | lower is search("rocky")
+  become: true
+
+- name: Installer PyMySQL sur Ubuntu
+  apt:
+    name: python3-pymysql
+    state: present
+    update_cache: yes
+  when: ansible_facts['os_family'] == "Debian"
+  become: true
+
+
+- name: Démarrer MariaDB manuellement (pas de systemd)
+  shell: "nohup mysqld_safe --datadir=/var/lib/mysql &"
+  args:
+    executable: /bin/bash
+  become: true
+  when: ansible_facts['os_family'] == "Debian"
+
+- name: Start MariaDB (Rocky/RHEL containers)
+  shell: |
+    mysqld_safe --datadir=/var/lib/mysql --user=mysql &
+    sleep 5  
+  become: true
+  when: ansible_os_family == "RedHat"
+
+# - name: Start Apache (Rocky/RHEL containers)
+#   shell: |
+#     /usr/sbin/httpd -DFOREGROUND &
+#   become: true
+#   when: ansible_os_family == "RedHat"
+
+- name: Attendre le démarrage de MariaDB
+  wait_for:
+    port: 3306
+    delay: 5
+    state: started
+
+# Sécurisation et configuration
+- name: Définir le mot de passe root
+  mysql_user:
+    name: root
+    host: localhost
+    password: "{{ db_root_password }}"
+    login_unix_socket: "{{ (ansible_facts['os_family'] == 'Debian') | ternary('/var/run/mysqld/mysqld.sock', '/var/lib/mysql/mysql.sock') }}"
+  ignore_errors: true
+  become: true
+
+- name: Supprimer les utilisateurs anonymes
+  mysql_user:
+    name: ''
+    host_all: true
+    state: absent
+    login_user: root
+    login_password: "{{ db_root_password }}"
+  become: true
+
+- name: Supprimer la base de test
+  mysql_db:
+    name: test
+    state: absent
+    login_user: root
+    login_password: "{{ db_root_password }}"
+  become: true
+
+- name: Créer la base de données WordPress
+  mysql_db:
+    name: "{{ wp_db_name }}"
+    state: present
+    login_user: root
+    login_password: "{{ db_root_password }}"
+  become: true
+
+- name: Créer l'utilisateur WordPress
+  mysql_user:
+    name: "{{ wp_db_user }}"
+    password: "{{ wp_db_password }}"
+    priv: "{{ wp_db_name }}.*:ALL"
+    host: localhost
+    state: present
+    login_user: root
+    login_password: "{{ db_root_password }}"
+  become: true

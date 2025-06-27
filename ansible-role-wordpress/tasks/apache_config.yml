@@ -1,0 +1,15 @@
+- name: reload apache
+  block:
+    - name: Redémarrer apache2 (Ubuntu)
+      service:
+        name: apache2
+        state: reloaded
+      when: ansible_facts['os_family'] == "Debian"
+      become: true
+
+    - name: Redémarrer httpd (Rocky)
+      service:
+        name: httpd
+        state: reloaded
+      when: ansible_facts['distribution'] | lower is search("rocky")
+      become: true

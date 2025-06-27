@@ -1,0 +1,5 @@
+- name: Deploy the wordpress
+  hosts: all
+  become: yes
+  roles:
+    - role: ansible-role-wordpress

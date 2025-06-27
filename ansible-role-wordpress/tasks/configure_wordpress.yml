@@ -1,0 +1,42 @@
+- name: Télécharger WordPress
+  get_url:
+    url: "{{ wp_download_url }}"
+    dest: /tmp/latest.zip
+
+- name: Décompresser WordPress
+  unarchive:
+    src: /tmp/latest.zip
+    dest: /tmp
+    remote_src: yes
+
+- name: Copier fichiers WordPress
+  copy:
+    src: /tmp/wordpress/
+    dest: "{{ wp_site_dir }}/"
+    owner: "{{ web_user }}"
+    group: "{{ web_group }}"
+    mode: 0755
+    remote_src: yes
+
+- name: Copier wp-config
+  copy:
+    src: "{{ wp_site_dir }}/wp-config-sample.php"
+    dest: "{{ wp_site_dir }}/wp-config.php"
+    remote_src: yes
+
+- name: Modifier wp-config.php
+  lineinfile:
+    path: "{{ wp_site_dir }}/wp-config.php"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  loop:
+    - { regexp: 'database_name_here', line: "define('DB_NAME', '{{ wp_db_name }}');" }
+    - { regexp: 'username_here', line: "define('DB_USER', '{{ wp_db_user }}');" }
+    - { regexp: 'password_here', line: "define('DB_PASSWORD', '{{ wp_db_password }}');" }
+
+- name: Définir les droits wp-config
+  file:
+    path: "{{ wp_site_dir }}/wp-config.php"
+    owner: "{{ web_user }}"
+    group: "{{ web_group }}"
+    mode: '0640'
