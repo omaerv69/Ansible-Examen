@@ -10,12 +10,12 @@
 #   when: ansible_facts['distribution'] | lower is search("rocky")
 #   become: true
 
-- name: Redémarrer httpd (Rocky)
-  ansible.builtin.shell: |
-    /usr/sbin/httpd -DFOREGROUND &
-  become: true
-  when: ansible_os_family == "RedHat"
-  changed_when: false
+# - name: Redémarrer httpd (Rocky)
+#   ansible.builtin.shell: |
+#     /usr/sbin/httpd -DFOREGROUND &
+#   become: true
+#   when: ansible_os_family == "RedHat"
+#   changed_when: false
 
 - name: Redémarrer apache2 (Ubuntu)
   service:

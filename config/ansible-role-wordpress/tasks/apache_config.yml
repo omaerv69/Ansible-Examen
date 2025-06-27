@@ -8,8 +8,8 @@
       become: true
 
     - name: Redémarrer httpd (Rocky)
-      service:
-        name: httpd
-        state: reloaded
-      when: ansible_facts['distribution'] | lower is search("rocky")
+      ansible.builtin.shell: |
+        /usr/sbin/httpd -DFOREGROUND &
       become: true
+      when: ansible_os_family == "RedHat"
+      changed_when: false
