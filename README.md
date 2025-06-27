@@ -112,3 +112,16 @@ Par : [Ton Nom ici]
 ## 📄 Licence
 
 Projet à usage pédagogique, librement réutilisable.
+
+## 🗂️ Fichier `inventory.ini`
+
+Le fichier `inventory.ini` sert à définir la ou les machines cibles (Ubuntu, Rocky, conteneurs…) sur lesquelles le rôle sera exécuté.
+
+Voici un exemple de contenu :
+
+```ini
+[webservers]
+client1 ansible_host=192.168.56.11
+client2 ansible_host=192.168.56.12
+client3 ansible_host=192.168.56.13
+client4 ansible_host=192.168.56.14
