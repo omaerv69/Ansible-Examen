@@ -1,0 +1,22 @@
+---
+# vars file for ansible-role
+
+web_user: "{{ 'apache' if ansible_facts['os_family'] == 'RedHat' else 'www-data' }}"
+web_group: "{{ 'apache' if ansible_facts['os_family'] == 'RedHat' else 'www-data' }}"
+
+rocky_packages:
+  - httpd
+  - php
+  - php-mysqlnd
+  - mariadb-server
+  - wget
+  - unzip
+
+ubuntu_packages:
+  - apache2
+  - php
+  - libapache2-mod-php
+  - php-mysql
+  - mariadb-server
+  - wget
+  - unzip

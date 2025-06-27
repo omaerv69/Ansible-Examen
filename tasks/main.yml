@@ -1,0 +1,91 @@
+---
+# tasks file for ansible-role
+
+- name: Afficher le système détecté
+  debug:
+    msg: "Système : {{ ansible_facts['distribution'] }}"
+
+- name: Mettre à jour les paquets - Rocky
+  dnf:
+    name: "*"
+    state: latest
+    update_cache: yes
+  when: ansible_facts['distribution'] | lower is search("rocky")
+  become: true
+
+- name: Installer les paquets - Rocky
+  dnf:
+    name: "{{ rocky_packages }}"
+    state: present
+  when: ansible_facts['distribution'] | lower is search("rocky")
+  become: true
+  notify: Redémarrer httpd (Rocky)
+
+- name: Vérifier si httpd est installé (Rocky uniquement)
+  command: which httpd
+  register: httpd_check
+  ignore_errors: true
+  when: ansible_facts['distribution'] | lower is search("rocky")
+
+- name: Afficher le chemin si httpd est trouvé
+  debug:
+    msg: "httpd installé à {{ httpd_check.stdout }}"
+  when: (httpd_check is defined) and (httpd_check.get('rc', 1) == 0)
+    
+
+
+- name: Mettre à jour les paquets - Ubuntu
+  apt:
+    update_cache: yes
+    upgrade: dist
+  when: ansible_facts['os_family'] == "Debian"
+  become: true
+
+- name: Installer les paquets - Ubuntu
+  apt:
+    name: "{{ ubuntu_packages }}"
+    state: present
+    install_recommends: no
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+  when: ansible_facts['os_family'] == "Debian"
+  become: true
+  notify: Redémarrer apache2 (Ubuntu)
+
+- name: Installer PyMySQL sur Rocky
+  dnf:
+    name: python3-PyMySQL
+    state: present
+  when: ansible_facts['distribution'] | lower is search("rocky")
+  become: true
+
+- name: Installer PyMySQL sur Ubuntu
+  apt:
+    name: python3-pymysql
+    state: present
+  when: ansible_facts['os_family'] == "Debian"
+  become: true
+
+- name: Installer php-fpm (Rocky)
+  dnf:
+    name: php-fpm
+    state: present
+  when: ansible_facts['os_family'] == "RedHat"
+  become: true
+
+- name: Configurer handler PHP-FPM dans Apache (Rocky uniquement)
+  copy:
+    src: php-handler.conf.j2
+    dest: /etc/httpd/conf.d/php-handler.conf
+  when: ansible_facts['os_family'] == "RedHat"
+  notify: reload apache
+  become: true
+
+- name: Démarrer php-fpm
+  shell: "nohup php-fpm &"
+  when: ansible_service_mgr != "systemd"
+  become: true
+
+- import_tasks: setup_mysql.yml
+- import_tasks: configure_wordpress.yml
+- import_tasks: apache_config.yml
