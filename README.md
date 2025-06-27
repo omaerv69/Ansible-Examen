@@ -1,38 +1,114 @@
-Role Name
-=========
+# 📦 Ansible Role - WordPress Installation
 
-A brief description of the role goes here.
+Ce projet Ansible permet d'installer automatiquement un site WordPress fonctionnel sur des machines **Ubuntu** ou **Rocky Linux**, y compris dans des **conteneurs sans systemd**.
 
-Requirements
-------------
+---
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+## ✅ Fonctionnalités
 
-Role Variables
---------------
+- Installation automatique de :
+  - Apache (`apache2` ou `httpd`)
+  - PHP + extensions nécessaires
+  - MariaDB (MySQL)
+- Déploiement et configuration de WordPress
+- Création de la base de données, utilisateur et mot de passe
+- Compatible avec les environnements sans systemd (Docker, LXC, etc.)
+- Configuration FCGI avec PHP-FPM (Rocky)
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+---
 
-Dependencies
-------------
+## 🛠️ Structure du rôle
+```
+ansible-role-wordpress/
+├── tasks/
+│   ├── main.yml
+│   ├── setup_mysql.yml
+│   ├── configure_wordpress.yml
+│   └── apache_config.yml
+├── handlers/
+│   └── main.yml
+├── vars/
+│   └── main.yml
+├── defaults/
+│   └── main.yml
+├── templates/
+│   └── php-handler.conf.j2
+└── README.md
+```
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+---
 
-Example Playbook
-----------------
+## ⚙️ Variables personnalisables
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
+Définies dans `defaults/main.yml` ou surchargées dans un playbook :
 
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
+| Variable              | Description                        | Valeur par défaut       |
+|-----------------------|-------------------------------------|--------------------------|
+| `wp_db_name`          | Nom de la base de données           | `wordpress`              |
+| `wp_db_user`          | Nom d'utilisateur MySQL             | `example`                |
+| `wp_db_password`      | Mot de passe MySQL                  | `examplePW`              |
+| `db_root_password`    | Mot de passe root MySQL             | `examplerootPW`          |
+| `wp_site_dir`         | Répertoire WordPress                | `/var/www/html`          |
+| `wp_download_url`     | URL d'archive WordPress             | `https://wordpress.org/latest.zip` |
 
-License
--------
+---
 
-BSD
+## 🚀 Exemple d'utilisation
 
-Author Information
-------------------
+### 1. Playbook
 
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+```yaml
+- name: Déploiement WordPress
+  hosts: all
+  become: true
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  roles:
+    - wordpress
+```
+
+### 2. lancement
+````
+ansible-playbook -i inventory.ini site.yml
+````
+
+## 🔧 Comportement par OS
+
+| OS/Distro     | Apache         | Utilisateur Web | PHP handler       | MariaDB service        |
+|---------------|----------------|------------------|--------------------|-------------------------|
+| Ubuntu        | apache2        | www-data         | mod_php            | mysql (service)         |
+| Rocky (VM)    | httpd          | apache           | proxy_fcgi + fpm   | mariadb (service)       |
+| Rocky (Docker)| httpd (shell)  | apache           | proxy_fcgi + fpm   | php-fpm (shell)         |
+
+---
+
+## 🛠️ Tâches spécifiques
+
+- Démarrage d'Apache via `httpd -DFOREGROUND` si `systemd` absent
+- Démarrage de `php-fpm` en background si conteneur
+- Création automatique de `wp-config.php`
+- Permissions dynamiques (`www-data` ou `apache` selon OS)
+
+---
+
+## 🧪 Vérifications utiles
+
+### Apache :
+- Ubuntu : `/var/log/apache2/error.log`
+- Rocky : `/var/log/httpd/error_log`
+
+### PHP-FPM :
+- Rocky : `/tmp/php-fpm.log` (si lancé en shell)
+
+---
+
+## 👤 Auteur
+
+Développé dans un contexte d’examen Ansible  
+Par : [Ton Nom ici]
+
+---
+
+## 📄 Licence
+
+Projet à usage pédagogique, librement réutilisable.
