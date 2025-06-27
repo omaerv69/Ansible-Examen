@@ -66,6 +66,26 @@
   when: ansible_facts['os_family'] == "Debian"
   become: true
 
+- name: Installer php-fpm (Rocky)
+  dnf:
+    name: php-fpm
+    state: present
+  when: ansible_facts['os_family'] == "RedHat"
+  become: true
+
+- name: Configurer handler PHP-FPM dans Apache (Rocky uniquement)
+  copy:
+    src: php-handler.conf.j2
+    dest: /etc/httpd/conf.d/php-handler.conf
+  when: ansible_facts['os_family'] == "RedHat"
+  notify: reload apache
+  become: true
+
+- name: Démarrer php-fpm
+  shell: "nohup php-fpm &"
+  when: ansible_service_mgr != "systemd"
+  become: true
+
 - import_tasks: setup_mysql.yml
 - import_tasks: configure_wordpress.yml
 - import_tasks: apache_config.yml

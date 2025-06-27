@@ -1,8 +1,0 @@
----
-# defaults file for ansible-role
-db_root_password: "SaikoPW"
-wp_db_name: "wordpress"
-wp_db_user: "omar"
-wp_db_password: "SaikoPW"
-wp_site_dir: "/var/www/html"
-wp_download_url: "https://wordpress.org/latest.zip"
